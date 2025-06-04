@@ -1,34 +1,36 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Ödeme Sonucu</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 100px;
-    }
-    .success { color: green; }
-    .fail { color: red; }
-  </style>
 </head>
 <body>
-  <h1>Ödeme Sonucu</h1>
-  <p id="status">Yükleniyor...</p>
-
+  <h1 id="result">Ödeme kontrol ediliyor...</h1>
   <script>
     const params = new URLSearchParams(window.location.search);
-    const status = params.get('status'); // Örn: ?status=paid
+    const status = params.get("status");
+    const sessionId = params.get("session_id");
 
-    const statusElement = document.getElementById('status');
-
-    if (status === "paid") {
-      statusElement.innerHTML = '<span class="success">Ödemeniz başarıyla tamamlandı. Teşekkür ederiz!</span>';
-    } else if (status === "unpaid" || status === "canceled") {
-      statusElement.innerHTML = '<span class="fail">Ödemeniz tamamlanamadı veya iptal edildi.</span>';
+    if (status === "paid" && sessionId) {
+      // Firebase initialize et, sonra:
+      fetch('https://your-cloud-function-url/verifyStripePayment', {
+        method: 'POST',
+        body: JSON.stringify({ data: { sessionId } }),
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.data?.success) {
+            document.getElementById("result").innerText = `Ödeme başarıyla gerçekleşti. Yüklenen kredi: ${result.data.amount}`;
+          } else {
+            document.getElementById("result").innerText = "Ödeme tamamlanmadı.";
+          }
+        })
+        .catch(() => {
+          document.getElementById("result").innerText = "Doğrulama sırasında hata oluştu.";
+        });
     } else {
-      statusElement.innerHTML = '<span class="fail">Ödeme durumu belirlenemedi.</span>';
+      document.getElementById("result").innerText = "Ödeme yapılmadı veya eksik bilgi.";
     }
   </script>
 </body>
