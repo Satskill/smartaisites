@@ -1,37 +1,53 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Ödeme Sonucu</title>
+  <meta charset="UTF-8">
+  <title>Ödeme Durumu</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get("status");
+      const sessionId = params.get("session_id");
+      const uid = params.get("uid");
+
+      document.getElementById("status").innerText = `Ödeme durumu: ${status}`;
+
+      if (status === "paid" && sessionId) {
+        try {
+          // Firestore fonksiyonunu doğrudan çağırmak istiyorsan:
+          const response = await fetch(
+            "https://us-central1-smartaihukuk.cloudfunctions.net/verifyStripePayment", 
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                data: {
+                  sessionId: sessionId,
+                  uid: uid
+                }
+              })
+            }
+          );
+
+          const result = await response.json();
+          if (result?.data?.success) {
+            document.getElementById("result").innerText = `✅ Ödeme onaylandı. Yüklenen kredi: ${result.data.amount}`;
+          } else {
+            document.getElementById("result").innerText = `⚠️ Ödeme henüz tamamlanmamış veya başarısız.`;
+          }
+
+        } catch (error) {
+          console.error("Doğrulama hatası:", error);
+          document.getElementById("result").innerText = "❌ Doğrulama sırasında hata oluştu.";
+        }
+      }
+    });
+  </script>
 </head>
 <body>
-  <h1 id="result">Ödeme kontrol ediliyor...</h1>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get("status");
-    const sessionId = params.get("session_id");
-
-    if (status === "paid" && sessionId) {
-      // Firebase initialize et, sonra:
-      fetch('https://your-cloud-function-url/verifyStripePayment', {
-        method: 'POST',
-        body: JSON.stringify({ data: { sessionId } }),
-        headers: { 'Content-Type': 'application/json' }
-      })
-        .then(res => res.json())
-        .then(result => {
-          if (result.data?.success) {
-            document.getElementById("result").innerText = `Ödeme başarıyla gerçekleşti. Yüklenen kredi: ${result.data.amount}`;
-          } else {
-            document.getElementById("result").innerText = "Ödeme tamamlanmadı.";
-          }
-        })
-        .catch(() => {
-          document.getElementById("result").innerText = "Doğrulama sırasında hata oluştu.";
-        });
-    } else {
-      document.getElementById("result").innerText = "Ödeme yapılmadı veya eksik bilgi.";
-    }
-  </script>
+  <h2 id="status">Ödeme sonucu kontrol ediliyor...</h2>
+  <p id="result"></p>
 </body>
 </html>
