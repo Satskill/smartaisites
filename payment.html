@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ödeme Sonucu</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    .success { color: green; }
+    .fail { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Ödeme Sonucu</h1>
+  <p id="status">Yükleniyor...</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status'); // Örn: ?status=paid
+
+    const statusElement = document.getElementById('status');
+
+    if (status === "paid") {
+      statusElement.innerHTML = '<span class="success">Ödemeniz başarıyla tamamlandı. Teşekkür ederiz!</span>';
+    } else if (status === "unpaid" || status === "canceled") {
+      statusElement.innerHTML = '<span class="fail">Ödemeniz tamamlanamadı veya iptal edildi.</span>';
+    } else {
+      statusElement.innerHTML = '<span class="fail">Ödeme durumu belirlenemedi.</span>';
+    }
+  </script>
+</body>
+</html>
